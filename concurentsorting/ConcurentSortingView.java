@@ -31,7 +31,9 @@ public class ConcurentSortingView extends FrameView {
     /**
      * Array to be sorted 
      */
-ArrayList<Integer> myArray;
+ArrayList<Integer> myArray1;
+ArrayList<Integer> myArray2;
+ArrayList<Integer> myArray3;
 
         //creating an image to Display to the panel
         ArrayImageCreator arrayImage1; 
@@ -49,12 +51,17 @@ ArrayList<Integer> myArray;
         
         //creating random array
         IntegerRandomArrayCreator iRand = new IntegerRandomArrayCreator(300,200);
-        myArray = iRand.getArray();
+        myArray1 = iRand.getArray();
+        myArray2 = iRand.getClone();
+        myArray3 = iRand.getClone();
+       
         
+       
+       
         //creating an image to Display to the panel
-        ArrayImageCreator arrayImage1 = new ArrayImageCreator(myArray);
-        ArrayImageCreator arrayImage2 = new ArrayImageCreator(myArray);
-        ArrayImageCreator arrayImage3 = new ArrayImageCreator(myArray);
+        ArrayImageCreator arrayImage1 = new ArrayImageCreator(myArray1);
+        ArrayImageCreator arrayImage2 = new ArrayImageCreator(myArray2);
+        ArrayImageCreator arrayImage3 = new ArrayImageCreator(myArray3);
         
         jPanel1.setLayout(new FlowLayout());
         jPanel2.setLayout(new FlowLayout());
@@ -223,8 +230,13 @@ ArrayList<Integer> myArray;
 
 private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseClicked
 // TODO add your handling code here:
-    Thread firstThread = new Thread(new BubbleSort(myArray,jPanel1));
+    Thread firstThread = new Thread(new BubbleSort(myArray1,jPanel1,10));
+    Thread secondThread = new Thread(new QuickSort(myArray2,jPanel2,10));
+    Thread thirdThread = new Thread(new HeapSort(myArray3,jPanel3,10));
     firstThread.start();
+    secondThread.start();
+    thirdThread.start();
+    
 }//GEN-LAST:event_jButton1MouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -262,7 +274,7 @@ class ArrayImageCreator  extends javax.swing.JPanel {
           super.setPreferredSize(new Dimension(300,200));
           this.myList = myList;
           //System.out.println("ArrayImageCreator has been created! Array elements: " + myList.size());
-        }
+      }
 
       //draw the image
       @Override
@@ -306,25 +318,43 @@ class ArrayImageCreator  extends javax.swing.JPanel {
 class IntegerRandomArrayCreator {
     int n=0; //number of elements to create
     int range=0; //maximum value for elements
-    
+     ArrayList<Integer> myInternalArray; //internal storage used when clonning 
+    /**
+     * Constructor for 1 single Array
+     * @param n number of elements
+     * @param range 
+     */
     IntegerRandomArrayCreator(int n, int range){
         this.n = n;
         this.range = range;
     }
 
     public ArrayList<Integer> getArray(){
-        ArrayList<Integer> myArray = new ArrayList<Integer>();
-        
+        myInternalArray = new ArrayList<Integer>();
+        ArrayList<Integer> myArray;
         Random rand = new Random();
-
-        
+  
         for (int i=0; i<n; i++){
             int  number = rand.nextInt(range) + 1;
-            myArray.add(number);
+            myInternalArray.add(number);
+            
         }
-        
-        
+        //creates a clone of data and returns it
+        myArray = getClone();
         return myArray;
+    }
+    
+    /**
+     * Returns a clone of internal array
+     * @return clone of internal array
+     */
+    public ArrayList<Integer> getClone(){
+         ArrayList<Integer> myArray = new ArrayList<Integer>();
+          
+        for (Integer i:myInternalArray){
+            myArray.add(i);
+        }   
+         return myArray;
     }
     
 
@@ -335,15 +365,27 @@ class IntegerRandomArrayCreator {
  * This class sorts an array using Bubble sort meethod
  */
 class BubbleSort implements Runnable{
+    //Array to be sorted
     protected ArrayList<Integer> myArray;
-    protected ArrayImageCreator theImage;
+    
+    //received Panel - used to draw on
     protected javax.swing.JPanel myPanel;
     
+    protected int myDelay;
+    
     //BUG here doesn't get the object initialised as parameter ArrayImageCreator theImage
-    public BubbleSort(ArrayList myArray, javax.swing.JPanel myPanel){
+    /**
+     * 
+     * @param myArray data to sort
+     * @param myPanel graphical panel to output
+     * @param Delay Delay between instructions in milliseconds
+     */
+    public BubbleSort(ArrayList myArray, javax.swing.JPanel myPanel, int myDelay){
         this.myArray = myArray;
         //this.theImage=theImage;
         this.myPanel = myPanel;
+        
+        this.myDelay = myDelay;
     }
     
     //sorting the Array using Bubble sort
@@ -354,19 +396,213 @@ class BubbleSort implements Runnable{
         
         do {
             for (int i=0; i<myArray.size()-1; i++)
+            {  
+              
+                
                 if (myArray.get(i)>myArray.get(i+1)){
                     int aux = myArray.get(i);
                     myArray.set(i,myArray.get(i+1));
                     myArray.set(i+1,aux);
-                    
-                    theImage.setArray(myArray);
-                   // theImage.updateUI();
-                    //myPanel.updateUI();
-                    sorted = false;
+                      try{
+                Thread.sleep(myDelay);
+                } catch (Exception e){
                 }
-            
+                    myPanel.updateUI();
+                    
+                    sorted = false;  
+                }
+            }
         } while (!sorted);
         
     }
     
 }
+
+
+
+/*
+ * This class sorts an array using Bubble sort meethod
+ */
+//http://www.vogella.com/tutorials/JavaAlgorithmsQuicksort/article.html
+class QuickSort implements Runnable{
+    //Array to be sorted
+    protected ArrayList<Integer> myArray;
+    
+    //received Panel - used to draw on
+    protected javax.swing.JPanel myPanel;
+    
+    protected int myDelay;
+    
+    //BUG here doesn't get the object initialised as parameter ArrayImageCreator theImage
+    /**
+     * 
+     * @param myArray data to sort
+     * @param myPanel graphical panel to output
+     * @param Delay Delay between instructions in milliseconds
+     */
+    public QuickSort(ArrayList myArray, javax.swing.JPanel myPanel, int myDelay){
+        this.myArray = myArray;
+        //this.theImage=theImage;
+        this.myPanel = myPanel;
+        
+        this.myDelay = myDelay;
+    }
+    
+     private void quicksort(int low, int high) {
+        int i = low, j = high;
+        System.out.println("Low is " + low + " High is " + high);
+        // Get the pivot element from the middle of the list
+        int pivot = myArray.get(low + (high-low)/2);
+        System.out.println("pivot is " + pivot);
+        // Divide into two lists
+        while (i <= j) {
+              
+            // If the current value from the left list is smaller than the pivot
+            // element then get the next element from the left list
+            while (myArray.get(i) < pivot) {
+                i++;
+            }
+            // If the current value from the right list is larger than the pivot
+            // element then get the next element from the right list
+            while (myArray.get(j) > pivot) {
+                j--;
+            }
+
+            // If we have found a value in the left list which is larger than
+            // the pivot element and if we have found a value in the right list
+            // which is smaller than the pivot element then we exchange the
+            // values.
+            // As we are done we can increase i and j
+            if (i <= j) {
+                exchange(i, j);
+                i++;
+                j--;
+            }
+        }
+        // Recursion
+        if (low < j)
+            quicksort(low, j);
+        if (i < high)
+            quicksort(i, high);
+    }
+
+    private void exchange(int i, int j) {
+        int temp = myArray.get(i);
+        myArray.set(i,myArray.get(j));
+        myArray.set(j,temp);
+        try{
+                Thread.sleep(myDelay);
+                } catch (Exception e){
+                }
+        myPanel.updateUI();
+    }
+    
+    
+    
+    //sorting the Array using Bubble sort
+    public void run(){
+        System.out.println("Running QuickSort");
+        
+                quicksort(0,myArray.size()-1);
+        
+              
+                
+     System.out.println("QS end run");
+    }
+    
+}
+ 
+
+class HeapSort implements Runnable{
+    //Array to be sorted
+    protected ArrayList<Integer> myArray;
+    
+    //received Panel - used to draw on
+    protected javax.swing.JPanel myPanel;
+    private int n;
+    protected int myDelay;
+    
+    //BUG here doesn't get the object initialised as parameter ArrayImageCreator theImage
+    /**
+     * 
+     * @param myArray data to sort
+     * @param myPanel graphical panel to output
+     * @param Delay Delay between instructions in milliseconds
+     */
+    public HeapSort(ArrayList myArray, javax.swing.JPanel myPanel, int myDelay){
+        this.myArray = myArray;
+        //this.theImage=theImage;
+        this.myPanel = myPanel;
+        this.n = myArray.size();
+        this.myDelay = myDelay;
+    }
+    
+      
+    /* Sort Function */
+    public void sort()
+    {       
+        heapify();        
+        for (int i = n; i > 0; i--)
+        {
+            swap(0, i);
+            n = n-1;
+            maxheap(0);
+        }
+    }     
+    /* Function to build a heap */   
+    public void heapify()
+    {
+        n = myArray.size()-1;
+        for (int i = n/2; i >= 0; i--)
+            maxheap(i);        
+    }
+    /* Function to swap largest element in heap */        
+    public void maxheap(int i)
+    { 
+        int left = 2*i ;
+        int right = 2*i + 1;
+        int max = i;
+        if (left <= n && myArray.get(left) > myArray.get(i))
+            max = left;
+        if (right <= n && myArray.get(right) > myArray.get(max))        
+            max = right;
+ 
+        if (max != i)
+        {
+            swap(i, max);
+            maxheap(max);
+        }
+    }    
+    /* Function to swap two numbers in an array */
+    public void swap(int i, int j)
+    {
+        int tmp = myArray.get(i);
+        myArray.set(i,myArray.get(j));
+        myArray.set(j,tmp); 
+        try{
+                Thread.sleep(myDelay);
+                } catch (Exception e){
+                }
+        myPanel.updateUI();
+    }    
+    
+    
+    
+    //sorting the Array using Bubble sort
+    public void run(){
+        System.out.println("Running QuickSort");
+        
+                sort();
+        
+    }    
+}
+ 
+
+
+
+
+
+
+
+
+
